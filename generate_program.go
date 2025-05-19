@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/openai/openai-go"
 	"golang.org/x/tools/imports"
 )
 
@@ -239,7 +238,7 @@ repo.Cache.Set(cacheKey, entity, cacheDuration)`
 
 		promptText := promptBuilder.String()
 
-		response, err := ChatCompletionHandler[GenerationResponse](context.Background(), openai.ChatModelO3Mini, promptText)
+		response, err := ChatCompletionHandler[GenerationResponse](context.Background(), "gpt-4.1-mini", promptText)
 		if err != nil {
 			return fmt.Errorf("ChatCompletionHandler error for method %s: %w", methodName, err)
 		}

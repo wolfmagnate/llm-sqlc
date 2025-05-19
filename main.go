@@ -4,39 +4,29 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go <path-to-infra-go-file>")
+	if len(os.Args) < 3 {
+		fmt.Println("Usage: go run main.go <command> <path-to-infra-go-file>")
 		os.Exit(1)
 	}
 
-	infraFile := os.Args[1]
-	if err := GenerateInfra(infraFile); err != nil {
-		log.Fatalf("error processing infra file: %v", err)
-	}
-}
+	command := os.Args[1]
+	infraFile := os.Args[2]
 
-func GenerateInfra(infraFile string) error {
-	// 1. SQLコード生成
-	if err := GenerateSQL(infraFile); err != nil {
-		return fmt.Errorf("failed to generate SQL: %w", err)
-	}
+	if command == "sql" {
+		if err := GenerateSQL(infraFile); err != nil {
+			log.Fatalf("failed to generate SQL: %v", err)
 
-	// 2. プロジェクトルート(カレントディレクトリ)から "task generate-db" コマンドを実行
-	cmd := exec.Command("task", "generate-db")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to execute task generate-db: %w", err)
+		}
+	} else if command == "program" {
+		if err := GenerateProgram(infraFile); err != nil {
+			log.Fatalf("failed to generate program: %v", err)
+		}
+	} else {
+		fmt.Printf("Unknown command: %s\n", command)
+		fmt.Println("Available commands: sql, program, infra")
+		os.Exit(1)
 	}
-
-	// 3. プログラムコード生成
-	if err := GenerateProgram(infraFile); err != nil {
-		return fmt.Errorf("failed to generate program: %w", err)
-	}
-
-	return nil
 }

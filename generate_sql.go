@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/openai/openai-go"
 	"gopkg.in/yaml.v3"
 )
 
@@ -124,7 +123,7 @@ The data type is an array of strings. If necessary, you can output multiple quer
 Each SQL query should start with a comment that is compliant with sqlc.
 `, ifaceSrc, method, schemaContent, entityDefinitionsSection)
 
-		resp, err := ChatCompletionHandler[SQLResponse](context.Background(), openai.ChatModelO3Mini, prompt)
+		resp, err := ChatCompletionHandler[SQLResponse](context.Background(), "gpt-4.1-mini", prompt)
 		if err != nil {
 			return fmt.Errorf("failed to generate SQL queries for method %s: %w", method, err)
 		}

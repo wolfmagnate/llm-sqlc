@@ -7,6 +7,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/openai/openai-go v0.1.0-alpha.59
 	golang.org/x/tools v0.30.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -20,5 +21,4 @@ require (
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/sync v0.11.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
