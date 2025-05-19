@@ -138,6 +138,9 @@ func GenerateProgram(infraFile string) error {
 - If the method argument is an entity type (for example, id entity.ChannelID), then if the corresponding record does not exist in the DB, return an error.
 - If the method argument is a basic data type (for example, id string), then if the corresponding record does not exist in the DB, return nil or an empty slice rather than an error.
 
+## Error Handling
+query := db.New(tx) simply wraps *sql.Tx, so the error returned will be usual sql error such as sql.ErrNoRows
+
 ## Cache
 The infrastructure implementation uses a cache to speed up access by avoiding direct DB queries.
 The cache is defined in pkg/infra/cache.go as follows:
@@ -149,6 +152,7 @@ import "time"
 type Cache interface {
 	Set(k string, x interface{}, d time.Duration)
 	Get(k string) (interface{}, bool)
+	Delete(k string)
 }
 
 ## Implementation Pattern
@@ -165,7 +169,7 @@ if cachedEntity, found := repo.Cache.Get(cacheKey); found {
 // Convert the retrieved data to an Entity using the New function.
 
 // If needed, store the entity in the cache. Set the cache duration appropriately.
-repo.Cache.Set(cacheKey, entity, cacheDuration)`
+repo.Cache.Set(cacheKey, entity, 10*time.Minute)`
 
 	// プロジェクトルートの go.mod から直接依存関係のみ抽出
 	goModContent, err := parseGoModFile()
