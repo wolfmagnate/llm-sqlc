@@ -13,26 +13,30 @@ import (
 	"github.com/openai/openai-go/option"
 )
 
-var client *openai.Client
+// AIClient wraps the OpenAI client.
+type AIClient struct {
+	client *openai.Client
+}
 
-// --- 初期化処理 ---
-func init() {
+// NewAIClient creates a new AIClient.
+// It loads environment variables, retrieves the API key, and initializes the OpenAI client.
+func NewAIClient() (*AIClient, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Println(".env ファイルの読み込みに失敗しましたが、環境変数を使用して続行します")
 	}
 
-	// 環境変数からAPIキーを取得
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		log.Fatal("OPENAI_API_KEY not set in .env")
+		return nil, fmt.Errorf("OPENAI_API_KEY not set in .env or environment")
 	}
 
-	// OpenAIクライアントの初期化
-	client = openai.NewClient(option.WithAPIKey(apiKey))
+	client := openai.NewClient(option.WithAPIKey(apiKey))
+	return &AIClient{client: client}, nil
 }
 
-// SchemaGenerator は任意の構造体からJSONスキーマを生成します
+// SchemaGenerator is a utility function to generate JSON schemas from Go types.
+// It remains a package-level function as it does not depend on AIClient's state.
 func SchemaGenerator[T any]() interface{} {
 	reflector := jsonschema.Reflector{
 		AllowAdditionalProperties: false,
@@ -42,12 +46,11 @@ func SchemaGenerator[T any]() interface{} {
 	return reflector.Reflect(v)
 }
 
-// ChatCompletionHandler はJSONスキーマを使ってOpenAI APIの補完を処理します
-func ChatCompletionHandler[T any](ctx context.Context, model string, prompt string) (*T, error) {
-	// JSONスキーマ生成
+// ChatCompletionHandler is a method of AIClient that uses the JSON schema
+// to process completions with the OpenAI API.
+func (ac *AIClient) ChatCompletionHandler[T any](ctx context.Context, model string, prompt string) (*T, error) {
 	schema := SchemaGenerator[T]()
 
-	// スキーマパラメータ設定
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
 		Name:        openai.F("response_schema"),
 		Description: openai.F("Structured response based on JSON schema"),
@@ -55,8 +58,7 @@ func ChatCompletionHandler[T any](ctx context.Context, model string, prompt stri
 		Strict:      openai.Bool(true),
 	}
 
-	// OpenAI APIを呼び出し
-	chat, err := client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+	chat, err := ac.client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		}),
@@ -72,10 +74,9 @@ func ChatCompletionHandler[T any](ctx context.Context, model string, prompt stri
 		return nil, err
 	}
 
-	fmt.Println(prompt)
-	fmt.Println(chat.Choices[0].Message.Content)
+	fmt.Println(prompt) // For debugging, consider removing or making conditional
+	fmt.Println(chat.Choices[0].Message.Content) // For debugging
 
-	// 応答を構造体にデコード
 	var result T
 	err = json.Unmarshal([]byte(chat.Choices[0].Message.Content), &result)
 	if err != nil {
